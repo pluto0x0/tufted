@@ -23,8 +23,6 @@ jobs:
       - run: go install github.com/tdewolff/minify/v2/cmd/minify@v2.24.7
       # NOTE: Remove `cd template` step when deploying template from Typst Universe
       - run: |
-          make link
-          cd template
           make html
           minify --recursive --inplace _site/
       - uses: actions/configure-pages@v4
