@@ -23,4 +23,7 @@ assets:
 clean:
 	rm -rf _site/*
 
-.PHONY: html clean assets
+server:
+	python -m http.server --directory _site 8000 --bind localhost
+
+.PHONY: html clean assets server

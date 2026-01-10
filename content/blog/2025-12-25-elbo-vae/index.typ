@@ -7,27 +7,83 @@
 
 = ELBO
 
-In MLE, the log likelihood
-$ell(theta) = log p_theta (x)
-= log sum_z p_theta (x, z)$
+In Maximum Likelihood Estimation (MLE) our goal is to maximize the log likelihood of the parameter $theta$, which is defined as
+
+$
+ell(theta) = log p_theta (x)
+= log sum_z p_theta (x, z)
+$
+
 where $x$ is the obervation and $z$ is the latent variable.
 With Jensen's inequality, for any distribution $q(z)$, we have
-$ell(theta) = log sum_z p_theta (x,z)
+
+$
+ell(theta) &= log sum_z p_theta (x,z)
 = log sum_z q(z) (p_theta (x,z)) / q(z)
-= log EE_(z~q)[(p_theta (x,z)) / q(z)]
->= EE_(z~q) [log (p_theta (x,z)) / q(z)]
-= EE_(z~q) [log p_theta (x,z)] - EE_(z~q) [log q(z)]$.
-Therefore, define ELBO as
-$ell(theta) >=
-FF(q, theta) equiv EE_(z~q) [log p_theta (x,z) \/ log q(z)].$
-To make equality hold, require
-$forall z, (p_theta (x,z)) / q(z) = "constant" c => q(z) = (p_theta (x,z)) / (p_theta (x)) = p_theta (z|x)$ is the true posterior distribution.
-*KL Divergence.* We have entropy $H(p) = EE_(x~p)[- log p(x)]$,
-and cross entropy $H(p, q) = EE_(x~p)[- log q(x)] >= H(p)$.
-Finally, the KL divergence $"KL"(p || q) = H(p, q) - H(p) = EE_(x~p)[log p(x) - log q(x)]$.
-KL is non-negative:
-$KL(p, q)= -EE_(x~p)[log q(x) / p(x)] >= -log EE_(x~p)[q(x) / p(x)] = 0$
-and $KL(p, q) = 0$ iff $p=q$.
+= log EE_(z~q)[(p_theta (x,z)) / q(z)] \
+&>= EE_(z~q) [log (p_theta (x,z)) / q(z)]
+= EE_(z~q) [log p_theta (x,z)] - EE_(z~q) [log q(z)].
+$
+
+from which we define the Evidence Lower Bound (ELBO) $FF$ as
+
+$
+ell(theta) >=
+FF(q, theta) equiv EE_(z~q) [log p_theta (x,z) \/ log q(z)].
+$
+
+Jensen's inequality becomes equality iff for all $z$,
+$(p_theta (x,z)) / q(z)$ is a constant $c$. Solving for $q(z)$ gives
+
+$
+  p_theta (x) = sum_z p_theta (x,z) = c sum_z q(z) = c \
+  q(z) = (p_theta (x,z)) / c = (p_theta (x,z)) / (p_theta (x)) = p_theta (z|x).
+$
+
+Note that $q(z)$ is an arbitrary distribution, but in practice we often choose $q(z)$ to be an *approximate* posterior distribution $q(z|x)$, and ELBO equals the log likelihood iff $q(z|x)$ is equal to the *true posterior* $p_theta (z|x)$.
+
+
+== KL Divergence
+
+Before diving deeper into ELBO, let's review some concepts in information theory.
+
+The *entropy* of a distribution $p(x)$ is defined as
+
+$
+H(p) = EE_(x~p)[- log p(x)],
+$
+
+which is the expected amount of information needed to describe a random variable drawn from $p$.
+And if we have another distribution $q(x)$ to approximate $p(x)$ and use the code length based on $q$, we define the *cross entropy* between $p$ and $q$ as
+
+$
+H(p, q) = EE_(x~p)[- log q(x)]
+$
+
+Finally, the KL divergence between $p$ and $q$ is defined as the difference between cross entropy and entropy:
+
+$
+KL(p, q) = H(p, q) - H(p) = EE_(x~p)[log p(x) - log q(x)].
+$
+
+KL divergence measures how different two distributions are. KL divergence is always non-negative:
+
+// #tufted.margin-note(
+//   [123123123]
+// )
+
+$
+KL(p, q)
+=&EE_(x~p)[log q(x) / p(x)] \
+=&-EE_(x~p)[log (p(x) / q(x))] \
+limits(>=)^"Jensen's\nIneq"& -log EE_(x~p)[q(x) / p(x)] \
+=& -log integral_x p(x) (q(x) / p(x)) dif x \
+=& -log integral_x q(x) dif x \
+=& -log 1 = 0
+$
+
+and thus $KL(p, q) = 0$ iff $p=q$.
+
 *ELBO in Different Forms.* (1) The gap:
 $ell(theta) - FF(q, theta)
 = EE_(z~q)[log p_theta (x) - log p_theta (x,z) + log q(z)]
