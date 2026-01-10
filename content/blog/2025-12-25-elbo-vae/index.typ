@@ -15,7 +15,8 @@ ell(theta) = log p_theta (x)
 $
 
 where $x$ is the obervation and $z$ is the latent variable.
-With Jensen's inequality, for any distribution $q(z)$, we have
+Computing $ell(theta)$ directly is often intractable due to the summation over latent variable $z$.
+If we introduce an arbitrary distribution $q(z)$ over the latent variable $z$, we can derive a lower bound of $ell(theta)$ using Jensen's inequality:
 
 $
 ell(theta) &= log sum_z p_theta (x,z)
@@ -29,15 +30,15 @@ from which we define the Evidence Lower Bound (ELBO) $elbo$ as
 
 $
 ell(theta) >=
-elbo(q, theta) equiv EE_(z~q) [log p_theta (x,z) \/ log q(z)].
+elbo(q, theta) equiv EE_(z~q) [log p_theta (x,z) - log q(z)].
 $
 
 Jensen's inequality becomes equality iff for all $z$,
 $(p_theta (x,z)) / q(z)$ is a constant $c$. Solving for $q(z)$ gives
 
 $
-  p_theta (x) = sum_z p_theta (x,z) = c sum_z q(z) = c \
-  q(z) = (p_theta (x,z)) / c = (p_theta (x,z)) / (p_theta (x)) = p_theta (z|x).
+  p_theta (x) &= sum_z p_theta (x,z) = c sum_z q(z) = c \
+  q(z) &= (p_theta (x,z)) / c = (p_theta (x,z)) / (p_theta (x)) = p_theta (z|x).
 $
 
 Note that $q(z)$ is an arbitrary distribution, but in practice we often choose $q(z)$ to be an *approximate* posterior distribution $q(z|x)$, and ELBO equals the log likelihood iff $q(z|x)$ is equal to the *true posterior* $p_theta (z|x)$.
@@ -84,7 +85,16 @@ $
 
 and thus $KL(p, q) = 0$ iff $p=q$.
 
-== ELBO in Different Forms
+Now we can rewrite ELBO in terms of KL divergence:
+
+$
+  elbo(q, theta)
+   &= EE_(z~q) [log p_theta (x,z)] - EE_(z~q) [log q(z)] \
+  &= EE_(z~q) [log (p_theta (x,z)) / (p_theta (z))] - (EE_(z~q) [log q(z)] + EE_(z~q) [log p_theta (z)]) \
+  &= EE_(z~q) [log p_theta (x|z)] - KL(q(z), p_theta (z))
+$
+
+== Gap Between Log Likelihood and ELBO
 
 First we want to see the gapbetween log likelihood and ELBO:
 
@@ -97,16 +107,12 @@ $
 
 It's easy  to see that ELBO is a lower bound of log likelihood, and the gap is exactly the KL divergence between the approximate posterior $q(z)$ and the true posterior $p_theta (z|x)$, and the gap vanishes when the two posteriors are equal.
 
-From another perspective, the reason we use ELBO to approximate log likelihood is that computing true posterior $p_theta (z|x)$ is often intractable. Thus we 
-$EE_(z~q) [log p_theta (x,z)] - EE_(z~q) [log q(z)]
-= EE_(z~q) [log (p_theta (x,z)) / (p_theta (z))] - (EE_(z~q) [log q(z)] - EE_(z~q) [log p_theta (z)])
-= EE_(z~q) [log p_theta (x|z)] - "KL"(q(z) || p_theta (z))$
+== EM algorithm and MLE
 
-*EM Method.*
-We want to maximize $ell(theta) = log p(x|theta)$
+We want to maximize $ell(theta) = log p_theta (x)$
 from initial $theta^((i))$ and $q^((i))(z)$.
-*E Step.*
-Maximize $elbo(q^((i)), theta^((i)))$ w.r.t. $q$:
+
+*E Step:* Maximize $elbo(q^((i)), theta^((i)))$ w.r.t. $q$:
 $q^((i+1))(z) = p_(theta^((i))) (z|x)$
 *M Step.*
 Update $theta^((i))$ To maximize ELBO
