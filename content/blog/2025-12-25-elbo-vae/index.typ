@@ -1,8 +1,8 @@
-#import "../index.typ": template, tufted
-#show: template
+// #import "../index.typ": template, tufted
+// #show: template
 
 #let NN = $cal(N)$
-#let FF = $cal(F)$
+#let elbo = $cal(F)$
 #let KL(x, y) = $"KL"(#x, #y)$
 
 = ELBO
@@ -25,11 +25,11 @@ ell(theta) &= log sum_z p_theta (x,z)
 = EE_(z~q) [log p_theta (x,z)] - EE_(z~q) [log q(z)].
 $
 
-from which we define the Evidence Lower Bound (ELBO) $FF$ as
+from which we define the Evidence Lower Bound (ELBO) $elbo$ as
 
 $
 ell(theta) >=
-FF(q, theta) equiv EE_(z~q) [log p_theta (x,z) \/ log q(z)].
+elbo(q, theta) equiv EE_(z~q) [log p_theta (x,z) \/ log q(z)].
 $
 
 Jensen's inequality becomes equality iff for all $z$,
@@ -84,13 +84,20 @@ $
 
 and thus $KL(p, q) = 0$ iff $p=q$.
 
-*ELBO in Different Forms.* (1) The gap:
-$ell(theta) - FF(q, theta)
-= EE_(z~q)[log p_theta (x) - log p_theta (x,z) + log q(z)]
-= EE_(z~q)[-log p_theta (z|x) + log q(z)]
-= "KL"(q(z) || p_theta (z|x)) >= 0$.
-and gap is 0 iff $q(z) = p_theta (z|x)$.
-(2) Common form: ELBO euqals
+== ELBO in Different Forms
+
+First we want to see the gapbetween log likelihood and ELBO:
+
+$
+ell(theta) - elbo(q, theta)
+=& EE_(z~q)[log p_theta (x) - log p_theta (x,z) + log q(z)] \
+=& EE_(z~q)[-log p_theta (z|x) + log q(z)] \
+=& "KL"(q(z) || p_theta (z|x)) >= 0
+$
+
+It's easy  to see that ELBO is a lower bound of log likelihood, and the gap is exactly the KL divergence between the approximate posterior $q(z)$ and the true posterior $p_theta (z|x)$, and the gap vanishes when the two posteriors are equal.
+
+From another perspective, the reason we use ELBO to approximate log likelihood is that computing true posterior $p_theta (z|x)$ is often intractable. Thus we 
 $EE_(z~q) [log p_theta (x,z)] - EE_(z~q) [log q(z)]
 = EE_(z~q) [log (p_theta (x,z)) / (p_theta (z))] - (EE_(z~q) [log q(z)] - EE_(z~q) [log p_theta (z)])
 = EE_(z~q) [log p_theta (x|z)] - "KL"(q(z) || p_theta (z))$
@@ -99,13 +106,13 @@ $EE_(z~q) [log p_theta (x,z)] - EE_(z~q) [log q(z)]
 We want to maximize $ell(theta) = log p(x|theta)$
 from initial $theta^((i))$ and $q^((i))(z)$.
 *E Step.*
-Maximize $FF(q^((i)), theta^((i)))$ w.r.t. $q$:
+Maximize $elbo(q^((i)), theta^((i)))$ w.r.t. $q$:
 $q^((i+1))(z) = p_(theta^((i))) (z|x)$
 *M Step.*
 Update $theta^((i))$ To maximize ELBO
-$theta^((i+1)) = arg max_theta FF(q^((i+1)), theta)$
+$theta^((i+1)) = arg max_theta elbo(q^((i+1)), theta)$
 *Monotonicity of Log Likelihood.*
-$ell(theta^((i+1))) >= FF(q^((i+1)), theta^((i+1))) >= FF(q^((i+1)), theta^((i))) = ell(theta^((i)))$
+$ell(theta^((i+1))) >= elbo(q^((i+1)), theta^((i+1))) >= elbo(q^((i+1)), theta^((i))) = ell(theta^((i)))$
 
 *GMM.*
 Assume observed data $x$ comes from a mixture of $K$ Gaussian distributions:
@@ -117,7 +124,7 @@ Compute posterior probabilities (responsibilities):
 $gamma_(z^(i)=k) &<- p_(theta) (z^(i)=k|x^(i)) = (pi_k NN(x^(i)|mu_k, Sigma_k)) / (sum_(j=1)^K pi_j NN(x^(i)|mu_j, Sigma_j))$.
 *M Step.*
 Update parameters:
-$theta = arg max_theta FF(gamma, theta)$
+$theta = arg max_theta elbo(gamma, theta)$
 i.e. maximize likelihood given responsibilities $gamma_(z^(i)=k)$.
 Define $N_k & = sum_(i=1)^N gamma_(z^(i)=k)$, then
 $pi_k & <- N_k / N space\;
