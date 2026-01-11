@@ -1,12 +1,12 @@
-#import "../index.typ": template, tufted
-#show: template
-#let note = tufted.margin-note
-// #let note(t) = block(
-//   fill: luma(230),
-//   inset: 8pt,
-//   radius: 4pt,
-//   t
-// )
+// #import "../index.typ": template, tufted
+// #show: template
+// #let note = tufted.margin-note
+#let note(t) = block(
+  fill: luma(230),
+  inset: 8pt,
+  radius: 4pt,
+  t
+)
 
 #let NN = $cal(N)$
 #let elbo = $cal(F)$
@@ -74,9 +74,9 @@ $
 KL(p, q) = H(p, q) - H(p) = EE_(x~p)[log p(x) - log q(x)].
 $
 
-KL divergence measures how different two distributions are. KL divergence is always non-negative:
+KL divergence measures how different two distributions are.#footnote[However, KL divergence is not a true distance metric since it's not symmetric: $KL(p, q) != KL(q, p)$.] KL divergence is always non-negative:
 
-#note[However, KL divergence is not a true distance metric since it's not symmetric: $KL(p, q) != KL(q, p)$.]
+#note[]
 
 $
 KL(p, q)
