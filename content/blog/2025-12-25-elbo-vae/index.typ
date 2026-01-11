@@ -204,9 +204,9 @@ Based on that, the Variational Autoencoder (VAE) treats the latent variable $z$ 
 In VAE, *encoder* is the approximate posterior $q_phi (z|x)$, *decoder* is the generative distribution $p_theta (x|z)$, and *prior* distribution of latent variable is $p(z)$ which is usually assigned to standard Gaussian distribution $NN(0, I)$.
 
 
-#note([
-  image
-])
+// #note([
+//   image
+// ])
 
 
 == Loss Function
