@@ -70,14 +70,14 @@ $
 KL divergence measures how different two distributions are. KL divergence is always non-negative:
 
 // #tufted.margin-note(
-//   [123123123]
+//   [However, KL divergence is not a true distance metric since it's not symmetric: $KL(p, q) neq KL(q, p)$.]
 // )
 
 $
 KL(p, q)
 =&EE_(x~p)[log q(x) / p(x)] \
 =&-EE_(x~p)[log (p(x) / q(x))] \
-limits(>=)^"Jensen's\nIneq"& -log EE_(x~p)[q(x) / p(x)] \
+>=& -log EE_(x~p)[q(x) / p(x)]  &&"(Jensen's Ineq.)"\
 =& -log integral_x p(x) (q(x) / p(x)) dif x \
 =& -log integral_x q(x) dif x \
 =& -log 1 = 0
@@ -91,8 +91,10 @@ $
   elbo(q, theta)
    &= EE_(z~q) [log p_theta (x,z)] - EE_(z~q) [log q(z)] \
   &= EE_(z~q) [log (p_theta (x,z)) / (p_theta (z))] - (EE_(z~q) [log q(z)] + EE_(z~q) [log p_theta (z)]) \
-  &= EE_(z~q) [log p_theta (x|z)] - KL(q(z), p_theta (z))
+  &= EE_(z~q) [log p_theta (x|z)] - KL(q(z), p_theta (z)).
 $
+
+In this form, computing ELBO only requires evaluating the conditional likelihood $p_theta (x|z)$ and the prior distribution $p_theta (z)$, which are often much easier than computing the marginal likelihood $p_theta (x)$.
 
 == Gap Between Log Likelihood and ELBO
 
@@ -105,37 +107,54 @@ ell(theta) - elbo(q, theta)
 =& "KL"(q(z) || p_theta (z|x)) >= 0
 $
 
-It's easy  to see that ELBO is a lower bound of log likelihood, and the gap is exactly the KL divergence between the approximate posterior $q(z)$ and the true posterior $p_theta (z|x)$, and the gap vanishes when the two posteriors are equal.
+It's easy to see that ELBO is a lower bound of log likelihood, and the gap is exactly the KL divergence between the approximate posterior $q(z)$ and the true posterior $p_theta (z|x)$, and the gap vanishes when the two posteriors are equal.
 
 == EM algorithm and MLE
 
-We want to maximize $ell(theta) = log p_theta (x)$
-from initial $theta^((i))$ and $q^((i))(z)$.
+The target of MLE is to want to maximize the log likehood
+$ell(theta) = log p_theta (x)$. We denote the $i$-th step 
+of parameter as $theta^((i))$ and latent variable distribution as $q^((i))(z)$.
 
-*E Step:* Maximize $elbo(q^((i)), theta^((i)))$ w.r.t. $q$:
-$q^((i+1))(z) = p_(theta^((i))) (z|x)$
-*M Step.*
-Update $theta^((i))$ To maximize ELBO
-$theta^((i+1)) = arg max_theta elbo(q^((i+1)), theta)$
-*Monotonicity of Log Likelihood.*
-$ell(theta^((i+1))) >= elbo(q^((i+1)), theta^((i+1))) >= elbo(q^((i+1)), theta^((i))) = ell(theta^((i)))$
+*E Step:*
+In the E step, we set the latent variable distribution $q^((i))(z)$ to be the posterior given the current parameter $theta^((i))$:
 
-*GMM.*
-Assume observed data $x$ comes from a mixture of $K$ Gaussian distributions:
-$p_theta (x) = sum_(k=1)^K pi_k NN(x|mu_k, Sigma_k)$.
-where
-$theta = {pi_k, mu_k, Sigma_k}_(k=1)^K$ are model parameters, $pi_k$ are mixture coefficients satisfying $sum_(k=1)^K pi_k = 1$.
-*E Step.*
-Compute posterior probabilities (responsibilities):
-$gamma_(z^(i)=k) &<- p_(theta) (z^(i)=k|x^(i)) = (pi_k NN(x^(i)|mu_k, Sigma_k)) / (sum_(j=1)^K pi_j NN(x^(i)|mu_j, Sigma_j))$.
-*M Step.*
-Update parameters:
-$theta = arg max_theta elbo(gamma, theta)$
-i.e. maximize likelihood given responsibilities $gamma_(z^(i)=k)$.
-Define $N_k & = sum_(i=1)^N gamma_(z^(i)=k)$, then
-$pi_k & <- N_k / N space\;
-mu_k & <- (1 / N_k) sum_(i=1)^N gamma_(z^(i)=k) x^(i) space\;
-Sigma_k & <- (1 / N_k) sum_(i=1)^N gamma_(z^(i)=k) (x^(i) - mu_k)(x^(i) - mu_k)^top$
+$
+  q^((i+1))(z) = p_(theta^((i))) (z|x)
+$
+
+*M Step:*
+Once we have the latent variable distribution $q^((i+1))(z)$, we can update the model parameter $theta$ by maximizing the ELBO:
+
+$
+  theta^((i+1)) = arg max_theta elbo(q^((i+1)), theta)
+$
+
+*Monotonicity of Log Likelihood:*
+We can show that the log likelihood is non-decreasing after each EM step:
+
+$
+  &ell(theta^((i+1))) \
+  >=& elbo(q^((i+1)), theta^((i+1))) && "(lower bound)" \
+  >=& elbo(q^((i+1)), theta^((i))) && (arg max)\
+  =& ell(theta^((i))) && (q^((i+1)) = p_(theta^((i))) (z|x))
+$
+
+// *GMM.*
+// Assume observed data $x$ comes from a mixture of $K$ Gaussian distributions:
+// $p_theta (x) = sum_(k=1)^K pi_k NN(x|mu_k, Sigma_k)$.
+// where
+// $theta = {pi_k, mu_k, Sigma_k}_(k=1)^K$ are model parameters, $pi_k$ are mixture coefficients satisfying $sum_(k=1)^K pi_k = 1$.
+// *E Step.*
+// Compute posterior probabilities (responsibilities):
+// $gamma_(z^(i)=k) &<- p_(theta) (z^(i)=k|x^(i)) = (pi_k NN(x^(i)|mu_k, Sigma_k)) / (sum_(j=1)^K pi_j NN(x^(i)|mu_j, Sigma_j))$.
+// *M Step.*
+// Update parameters:
+// $theta = arg max_theta elbo(gamma, theta)$
+// i.e. maximize likelihood given responsibilities $gamma_(z^(i)=k)$.
+// Define $N_k & = sum_(i=1)^N gamma_(z^(i)=k)$, then
+// $pi_k & <- N_k / N space\;
+// mu_k & <- (1 / N_k) sum_(i=1)^N gamma_(z^(i)=k) x^(i) space\;
+// Sigma_k & <- (1 / N_k) sum_(i=1)^N gamma_(z^(i)=k) (x^(i) - mu_k)(x^(i) - mu_k)^top$
 
 // == 例子：高斯混合模型 GMM
 
@@ -175,14 +194,30 @@ Sigma_k & <- (1 / N_k) sum_(i=1)^N gamma_(z^(i)=k) (x^(i) - mu_k)(x^(i) - mu_k)^
 
 = VAE
 
-In VAE, *encoder* is the approximate posterior $q_phi (z|x)$ (maps data to latent space distribution, by predicting $mu$ and $sigma^2$), *decoder* is the generative distribution $p_theta (x|z)$ (maps latent variable to data distribution), and *prior* distribution of latent variable is $p(z)$, usually $NN(0, I)$.
+A common approach in generative modeling is Autoencoder, which maps data $x$ to a latent variable $z$ using an encoder, and then reconstructs $x$ from $z$ using a decoder.
 
-*Loss Function.* We use ELBO as approximation of log likelihood:
-// $EE_(q_phi (z|x)) [log p_theta (x|z)] - "KL"(q_phi (z|x) || p(z))$
-$cal(L) = -EE_(q_phi (z|x)) [log p_theta (x|z)] + "KL"(q_phi (z|x) || p(z))$
+Based on that, the Variational Autoencoder (VAE) treats the latent variable $z$ as a random variable and have the encoder predict a distribution over $z$ given $x$. With this probabilitic interpretation, it becomes possible to sample new data by sampling $z$ from a prior distribution, and also other operations like interpolation in the latent space.
+
+In VAE, *encoder* is the approximate posterior $q_phi (z|x)$, *decoder* is the generative distribution $p_theta (x|z)$, and *prior* distribution of latent variable is $p(z)$ which is usually assigned to standard Gaussian distribution $NN(0, I)$.
+
+
+// #tufted.margin-note(
+//   [The latent variable distribution is also assumed to be Gaussian, which can be parameterized by a neural network that outputs the mean and variance given input $x$.]
+// )
+
+== Loss Function
+
+We use ELBO as approximation of log likelihood:
+
+$
+  cal(L)
+  = -elbo(q_phi, theta)
+  = -EE_(q_phi (z|x)) [log p_theta (x|z)] + KL(q_phi (z|x), p(z))
+$
+
 where
-$EE_(q_phi (z|x)) [log p_theta (x|z)]$ is the reconstruction term, encouraging decoder to reconstruct input $x$ from latent variable $z$ accurately;
-$"KL"(q_phi (z|x) || p(z))$ is the regularization term, encouraging the approximate posterior distribution $q_phi (z|x)$ to be close to the prior distribution $p(z)$.
+$EE_(q_phi (z|x)) [log p_theta (x|z)]$ is the *reconstruction term*, encouraging decoder to reconstruct input $x$ from latent variable $z$ accurately;
+$"KL"(q_phi (z|x) || p(z))$ is the *regularization term*, encouraging the approximate posterior distribution $q_phi (z|x)$ to be close to the prior distribution $p(z)$.
 *Training and Reparameterization.* (1) Use a sample of $z$ to approximate the expectation (2) To make sampling $z ~ NN(mu(x), sigma^2(x))$ differentiable, use reparameterization trick:
 $z = mu(x) + sigma(x) dot.o epsilon, epsilon ~ NN(0, I)$.
 *Breaking Down the KL Term.*
