@@ -1,12 +1,12 @@
-// #import "../index.typ": template, tufted
-// #show: template
-// #let note = tufted.margin-note
-#let note(t) = block(
-  fill: luma(230),
-  inset: 8pt,
-  radius: 4pt,
-  t
-)
+#import "../index.typ": template, tufted
+#show: template
+#let note = tufted.margin-note
+// #let note(t) = block(
+//   fill: luma(230),
+//   inset: 8pt,
+//   radius: 4pt,
+//   t
+// )
 
 #let NN = $cal(N)$
 #let elbo = $cal(F)$
@@ -76,7 +76,7 @@ $
 
 KL divergence measures how different two distributions are. KL divergence is always non-negative:
 
-#note[However, KL divergence is not a true distance metric since it's not symmetric: $KL(p, q) neq KL(q, p)$.]
+#note[However, KL divergence is not a true distance metric since it's not symmetric: $KL(p, q) != KL(q, p)$.]
 
 $
 KL(p, q)
@@ -206,7 +206,9 @@ Based on that, the Variational Autoencoder (VAE) treats the latent variable $z$ 
 In VAE, *encoder* is the approximate posterior $q_phi (z|x)$, *decoder* is the generative distribution $p_theta (x|z)$, and *prior* distribution of latent variable is $p(z)$ which is usually assigned to standard Gaussian distribution $NN(0, I)$.
 
 
-#note([123])
+#note([
+  image
+])
 
 
 == Loss Function
@@ -219,28 +221,44 @@ $
   = -EE_(q_phi (z|x)) [log p_theta (x|z)] + KL(q_phi (z|x), p(z))
 $
 
-where
-$EE_(q_phi (z|x)) [log p_theta (x|z)]$ is the *reconstruction term*, which encourages the decoder to reconstruct input $x$ from latent variable $z$ accurately;
+where $EE_(q_phi (z|x)) [log p_theta (x|z)]$ is the *reconstruction term*, which encourages the decoder to reconstruct input $x$ from latent variable $z$ accurately;
 $KL(q_phi (z|x), p(z))$ is the *regularization term*, encouraging the approximate posterior distribution $q_phi (z|x)$ to be close to the prior distribution $p(z)$.
-*Training and Reparameterization.* (1) Use a sample of $z$ to approximate the expectation (2) To make sampling $z ~ NN(mu(x), sigma^2(x))$ differentiable, use reparameterization trick:
-$z = mu(x) + sigma(x) dot.o epsilon, epsilon ~ NN(0, I)$.
-*Breaking Down the KL Term.*
-Define $q_"agg" (z) = EE_(x~P(x)) q(z|x)$, then $EE_(x~p_"data") "ELBO"$ is
-$underbrace(EE_(x~p_"data") EE_(q_phi (z|x)) [log p_theta (x|z)], "Reconstruction")
-- underbrace(H(q_"agg" (z), p(z)), "Cross Entropy")
-+ underbrace(H(p(z)), "Entropy")$
-where they encourages the latent distribution $q_"agg"$ to:
-Reconstruction: deviate from the prior distribution $p(z)$, improving reconstruction quality.
-Cross Entropy: pull towards the center of the prior distribution $p(z)$, reducing both mean and variance.
-Entropy: increase variance, making the it flatter.
-*Problems in VAE.*
-*Prior Hole.*
-$q_"agg" (z)$ will not cover all $p(z)$, leaving holes that $q_"agg" (z)$ never visits and consequently poor reconstruction quality.
-*Posterior Collapse.*
-If the decoder is too powerful e.g. autoregressive models, it can ignore the latent variable $z$ entirely and reconstruct $x$ directly from its learned parameters. In this case, the approximate posterior $q_phi (z|x)$ collapses to the prior $p(z)$, leading to ineffective latent representations.
-$exists i space s.t. space forall x, q_phi (z_i|x) approx p(z_i)$
 
-*Vector Quantized VAE(VQ VAE)*
+== Training and Reparameterization
+
+In practice, the exceptation in the reconstruction term is often intractable, and we use Monte Carlo sampling to approximate it. However, naively sampling $z$ from $q_phi (z|x)$ would break the computational graph and prevent gradients from flowing back to the encoder parameters $phi$. To address the sampling $z ~ NN(mu(x), sigma^2(x))$, we use the reparameterization trick:
+
+$
+  z = mu(x) + sigma(x) dot.o epsilon, epsilon ~ NN(0, I).
+$
+
+// *Breaking Down the KL Term.*
+// Define $q_"agg" (z) = EE_(x~P(x)) q(z|x)$, then $EE_(x~p_"data") "ELBO"$ is
+// $underbrace(EE_(x~p_"data") EE_(q_phi (z|x)) [log p_theta (x|z)], "Reconstruction")
+// - underbrace(H(q_"agg" (z), p(z)), "Cross Entropy")
+// + underbrace(H(p(z)), "Entropy")$
+// where they encourages the latent distribution $q_"agg"$ to:
+// Reconstruction: deviate from the prior distribution $p(z)$, improving reconstruction quality.
+// Cross Entropy: pull towards the center of the prior distribution $p(z)$, reducing both mean and variance.
+// Entropy: increase variance, making the it flatter.
+
+== Problems in VAE
+
+*Prior Hole:*
+$q_"agg" (z)$ will not cover all $p(z)$, leaving holes that $q_"agg" (z)$ never visits and consequently poor reconstruction quality.
+
+*Posterior Collapse:*
+If the decoder is too powerful e.g. autoregressive models, it can ignore the latent variable $z$ entirely and reconstruct $x$ directly from its learned parameters. In this case, the approximate posterior $q_phi (z|x)$ collapses to the prior $p(z)$, leading to ineffective latent representations.
+
+$
+  exists i space s.t. space forall x, q_phi (z_i|x) approx p(z_i)
+$
+
+== Vector Quantized VAE(VQ VAE)
+
 Let $z$ be discrete latent variable. VQ VAE defines a discrete codebook and maps the continuous encoder output to the nearest codebook entry. This solves the Prior Hole and Posterior Collapse issues in standard VAE but requires special training techniques to handle the non-differentiability of discrete variables.
 Formally,
-$q(z=k|x) = bb(1)[k=arg min_j norm(z_e (x) - e_j)_2]$
+
+$
+  q(z=k|x) = bb(1)[k=arg min_j norm(z_e (x) - e_j)_2]
+$
