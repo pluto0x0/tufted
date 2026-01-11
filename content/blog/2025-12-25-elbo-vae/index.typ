@@ -1,12 +1,12 @@
-// #import "../index.typ": template, tufted
-// #show: template
+#import "../index.typ": template, tufted
+#show: template
 // #let note = tufted.margin-note
-#let note(t) = block(
-  fill: luma(230),
-  inset: 8pt,
-  radius: 4pt,
-  t
-)
+// #let note(t) = block(
+//   fill: luma(230),
+//   inset: 8pt,
+//   radius: 4pt,
+//   t
+// )
 
 #let NN = $cal(N)$
 #let elbo = $cal(F)$
@@ -75,8 +75,6 @@ KL(p, q) = H(p, q) - H(p) = EE_(x~p)[log p(x) - log q(x)].
 $
 
 KL divergence measures how different two distributions are.#footnote[However, KL divergence is not a true distance metric since it's not symmetric: $KL(p, q) != KL(q, p)$.] KL divergence is always non-negative:
-
-#note[]
 
 $
 KL(p, q)
@@ -245,7 +243,7 @@ $
 == Problems in VAE
 
 *Prior Hole:*
-$q_"agg" (z)$ will not cover all $p(z)$, leaving holes that $q_"agg" (z)$ never visits and consequently poor reconstruction quality.
+Define aggregated latent distribution as $q_"agg" (z) = EE_(x~P(x)) q(z|x)$, then if $q_"agg" (z)$ does not cover the whole pior $p(z)$, it leaves holes that $q_"agg" (z)$ never visits and consequently poor reconstruction quality.
 
 *Posterior Collapse:*
 If the decoder is too powerful e.g. autoregressive models, it can ignore the latent variable $z$ entirely and reconstruct $x$ directly from its learned parameters. In this case, the approximate posterior $q_phi (z|x)$ collapses to the prior $p(z)$, leading to ineffective latent representations.
@@ -256,8 +254,10 @@ $
 
 == Vector Quantized VAE(VQ VAE)
 
-Let $z$ be discrete latent variable. VQ VAE defines a discrete codebook and maps the continuous encoder output to the nearest codebook entry. This solves the Prior Hole and Posterior Collapse issues in standard VAE but requires special training techniques to handle the non-differentiability of discrete variables.
-Formally,
+// Let $z$ be discrete latent variable. VQ VAE defines a discrete codebook and maps the continuous encoder output to the nearest codebook entry. This solves the Prior Hole and Posterior Collapse issues in standard VAE but requires special training techniques to handle the non-differentiability of discrete variables.
+// Formally,
+
+In VQ VAE, the latent variable $z$ is discrete and represented by a codebook of embeddings ${e_k}_(k=1)^K$. The encoder outputs a continuous representation $z_e (x)$, which is then quantized to the nearest codebook entry:
 
 $
   q(z=k|x) = bb(1)[k=arg min_j norm(z_e (x) - e_j)_2]
