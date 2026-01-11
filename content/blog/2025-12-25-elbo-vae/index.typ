@@ -1,5 +1,12 @@
 // #import "../index.typ": template, tufted
 // #show: template
+// #let note = tufted.margin-note
+#let note(t) = block(
+  fill: luma(230),
+  inset: 8pt,
+  radius: 4pt,
+  t
+)
 
 #let NN = $cal(N)$
 #let elbo = $cal(F)$
@@ -69,9 +76,7 @@ $
 
 KL divergence measures how different two distributions are. KL divergence is always non-negative:
 
-// #tufted.margin-note(
-//   [However, KL divergence is not a true distance metric since it's not symmetric: $KL(p, q) neq KL(q, p)$.]
-// )
+#note[However, KL divergence is not a true distance metric since it's not symmetric: $KL(p, q) neq KL(q, p)$.]
 
 $
 KL(p, q)
@@ -201,9 +206,8 @@ Based on that, the Variational Autoencoder (VAE) treats the latent variable $z$ 
 In VAE, *encoder* is the approximate posterior $q_phi (z|x)$, *decoder* is the generative distribution $p_theta (x|z)$, and *prior* distribution of latent variable is $p(z)$ which is usually assigned to standard Gaussian distribution $NN(0, I)$.
 
 
-// #tufted.margin-note(
-//   [The latent variable distribution is also assumed to be Gaussian, which can be parameterized by a neural network that outputs the mean and variance given input $x$.]
-// )
+#note([123])
+
 
 == Loss Function
 
@@ -216,8 +220,8 @@ $
 $
 
 where
-$EE_(q_phi (z|x)) [log p_theta (x|z)]$ is the *reconstruction term*, encouraging decoder to reconstruct input $x$ from latent variable $z$ accurately;
-$"KL"(q_phi (z|x) || p(z))$ is the *regularization term*, encouraging the approximate posterior distribution $q_phi (z|x)$ to be close to the prior distribution $p(z)$.
+$EE_(q_phi (z|x)) [log p_theta (x|z)]$ is the *reconstruction term*, which encourages the decoder to reconstruct input $x$ from latent variable $z$ accurately;
+$KL(q_phi (z|x), p(z))$ is the *regularization term*, encouraging the approximate posterior distribution $q_phi (z|x)$ to be close to the prior distribution $p(z)$.
 *Training and Reparameterization.* (1) Use a sample of $z$ to approximate the expectation (2) To make sampling $z ~ NN(mu(x), sigma^2(x))$ differentiable, use reparameterization trick:
 $z = mu(x) + sigma(x) dot.o epsilon, epsilon ~ NN(0, I)$.
 *Breaking Down the KL Term.*
