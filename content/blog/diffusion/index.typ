@@ -1,9 +1,9 @@
-// #import "../index.typ": template, tufted
-// #show: template.with(title: "Diffusion")
+#import "../index.typ": template, tufted
+#show: template.with(title: "Diffusion")
 
 // #set heading(numbering: "1.")
 // #outline()
-#set math.equation(numbering: "a.")
+// #set math.equation(numbering: "a.")
 
 #let NN = $cal(N)$
 #let LL = $cal(L)$
@@ -23,7 +23,7 @@ $
   q(x_t|x_(t-1)) = NN(x_t\; sqrt(1 - beta_t) x_(t-1), beta_t I)
 $
 
-where $beta_t$ is a small positive variance schedule.
+where $beta_t$ is a small positive variance schedule which satisfies $0 < beta_1 < beta_2 < ... < beta_T < 1$.
 With the reparameterize trick, the forward process is equivalently
 $x_t = sqrt(1 - beta_t) x_(t-1) + sqrt(beta_t) epsilon_t$, $epsilon_t ~ NN(0, I)$.
 
@@ -122,7 +122,7 @@ $
   q(x_(t-1)|x_t,x_0) =: NN(x_(t-1)\; mu_q (x_t, x_0, t), sigma_q (t)^2 I)
 $
 
-We can find that the variance $Sigma_q (t)$ is independent of $x$, which means we only need to learn mean $mu_theta$. Furthermore, if the model predicts the original data $x_0$ as $hat(x_theta)(x_t, t)$, then we can obtain the predicted mean as $mu_theta (x_t, t)=mu_q (x_t, hat(x_theta)(x_t, t), t)$.
+We can find out that the variance $sigma_q (t) I$ is independent of $x$, which means we only need to learn mean $mu_theta$. Furthermore, if the model predicts the original data $x_0$ as $hat(x_theta)(x_t, t)$, then we can obtain the predicted mean as $mu_theta (x_t, t)=mu_q (x_t, hat(x_theta)(x_t, t), t)$.
 
 Therefore, by decomposing
 #footnote[KL divergence between 2 Gaussians is:
@@ -178,12 +178,12 @@ $
   v = sqrt(balpha_t) epsilon - sqrt(1 - balpha_t) x_0
 $
 
-// #tufted.margin-note(
+#tufted.margin-note(
   figure(
     caption: [Illustration of $x_t$ and $v$ in the $x_0$-$epsilon$ space],
     image("img/image.png", width: 60%)
   )
-// )
+)
 
 Note that the coefficients of $x_0$ and $epsilon$ in $x_t$ are both positive, while $(sqrt(balpha_t)^2 + sqrt(1 - balpha_t)^2) = 1$. Therefore, the $x_t$ is a unit vector in the $x_0$-$epsilon$ space, while $v$ is the speed vector orthogonal to $x_t$.
 
@@ -205,7 +205,7 @@ $
   EE[mu_z|z] = z + Sigma_z nabla_z log p(z)
 $.
 
-Recall $q(x_t|x_0) = NN(x_t\; sqrt(balpha_t) x_0, (1 - balpha_t) I)$. So we can reparameterize the $x_0$ as
+Recall $q(x_t|x_0) = NN(x_t\; sqrt(balpha_t) x_0, (1 - balpha_t) I)$. So we can reparameterize the $x_0$ with Tweedie's formula as
 
 $
   x_0 = (x_t + (1 - balpha_t) nabla_(x_t) log p(x_t)) / sqrt(balpha_t).
@@ -217,7 +217,7 @@ Substituting into the denoising loss @eq:denoise-loss-x0, we have
 
 $
   EE_q(x_t|x_0) [1/(2 sigma_q^2(t)) (1-alpha_t)^2/alpha_t norm(s_theta (x_t, t) - nabla log p(x_t))_2^2].
-$
+$<eq:score-loss>
 
 == Langevin sampling (discrete)
 
@@ -237,25 +237,48 @@ This process is a noisy gradient ascent toward high-density regions, which enabl
 
 == Learning Score Function
 
-In score-based diffusion models, the learning goal is the score function of the data distribution:
+We've shown in the previous section that denoising is equivalent to learning the score function
 
 $
-  s_theta (x_t, t) approx nabla_(x_t) log p_t (x_t)
+  s_theta (x_t, t) approx nabla_(x_t) log p_t (x_t),
 $
 
-We've shown that the denoising loss can be rewritten in terms of score function, and if we want to directly learn the score function, we can sample a data $x_0$ and learn the posterior score $nabla_(x_t) log q(x_t|x_0)$ via minimizing
+and now we will see how to directly learn the score function. Since the data distribution $p(x)$ is unknown, we instead learn the score of the noised data distribution $q(x_t|x_0)$ at different noise levels $t$. We can assume the data distribution is Gaussian, i.e. $q(x_t|x_0) = NN(x_t\; x_0, sigma_t^2 I)$, then we can write the score function. Denote a sample $u = x + sigma_t z$ with $z ~ NN(0, I)$, then
+
+$
+  nabla_u log NN(u\; x, sigma_t^2 I)
+  = nabla_u (-(u-x)^top (u-x)) / (2 sigma_t^2)
+  = -(u - x) / sigma_t^2
+  = z / sigma_t.
+$
+
+We can thus define the Denoising Score Matching (DSM) loss as
+
+$
+  LL_"DSM" = EE_(x,z,t) [lambda(t) norm(s_theta (x+sigma_t z, t) + z / sigma_t)_2^2]
+$
+
+where $lambda(t)$ is a weighting function which balances the loss at different noise levels . A common choice is to normalize $lambda(t) (1/sigma_t)^2$, i.e. $lambda(t) = sigma_t^2$.
+
+// Comparing the denoising loss with score prediction in @eq:score-loss and DSM loss, we can see they are equivalent up to a constant factor
+
+// and if we want to directly learn the score function, we can sample a data $x_0$ and learn the posterior score $nabla_(x_t) log q(x_t|x_0)$ via minimizing
 
 = Conditional Diffusion
+
 *Conditional score.*
 Target $nabla_x log p(x|c) = nabla_x log p(x) + nabla_x log p(c|x)$.
+
 *Classifier Guidance.* Use a classifier $h$ on noised $x_t$. The prediction probability is $"softmax"(p_i (x_t)) := (exp h_i (x_t)) / (sum_j exp h_j (x_t))$. Then $nabla_x log p(c|x)$ is $nabla_x h_c (x) - nabla_x log (sum_j exp h_j (x))$. Use backprop to compute gradients, or just use $nabla_x h_c (x)$. Further, define $nabla_x log p(x|c) = nabla_x log p(x) + s nabla_x log p(c|x)$, scale by $s > 1$ to strengthen conditioning.
 
 *Classifier Free Guidance (CFG).*
 Define a Conditional Denoiser $D_theta (x_t, sigma, c) -> hat(x_0)$ that takes condition $c$ as input.
+
 *Two scores.*
 Conditional: $nabla_x log p_theta(x_t, c) = (D_theta (x_t, sigma, c) - x_t) / sigma^2$.
 Unconditional: $nabla_x log p_theta(x_t) = (D_theta (x_t, sigma, emptyset) - x_t) / sigma^2$.
 where $emptyset$ denotes no condition.
+
 *CFG combination.*
 $nabla_x log p(x|c) = S nabla_x log p_theta (x_t, c) + (1 - S) nabla_x log p_theta (x_t)$
 $= 1/sigma^2 (S D_theta (x_t, sigma, c) + (1 - S) D_theta (x_t, sigma, emptyset) - x_t)$.
