@@ -1,9 +1,9 @@
-#import "../index.typ": template, tufted
-#show: template.with(title: "Diffusion")
+// #import "../index.typ": template, tufted
+// #show: template.with(title: "Diffusion")
 
 // #set heading(numbering: "1.")
 // #outline()
-// #set math.equation(numbering: "a.")
+#set math.equation(numbering: "a.")
 
 #let NN = $cal(N)$
 #let LL = $cal(L)$
@@ -92,9 +92,7 @@ where
 - $LL_(t-1) = EE_q(x_t|x_0) KL(q(x_(t-1)|x_t,x_0), p_theta (x_(t-1)|x_t))$ is the denoising matching term
 - $LL_T = KL(q(x_T|x_0), p_theta (x_T))$ is the prior matching term, which is close to 0 for large $T$ because both distributions are close to $NN(0, I)$. This term is often ignored in practice.
 
-*One step Denoise.*
-
-
+== One step Denoise
 
 Consider one-step denoising term $LL_(t-1)$. The true posterior $q(x_(t-1)|x_t,x_0)$ is the learning target of our denoiser model $p_theta (x_(t-1) | x_t)$, which can be derived by Bayes' rule:
 #footnote[
@@ -142,7 +140,7 @@ By eliminating $mu_theta (x_t, t)$ in, the loss becomse
 
 $
   EE_q(x_t|x_0) [1/(2 sigma_q^2(t)) (balpha_(t-1) beta_t^2)/((1-balpha_t)^2) norm(hat(x_theta)(x_t, t) - x_0)_2^2].
-$
+$<eq:denoise-loss-x0>
 
 == Training
 
@@ -173,26 +171,79 @@ $
 
 Compared to predicting $x_0$, $epsilon_0$ follows a standard Gaussian distribution, thus has better numerical stability.
 
+In fact, we can predict any linear combination of $x_0$ and $epsilon_0$, e.g. in the v-parameterization, we predict
+
+$
+  // x_t = sqrt(balpha_t) x_0 + sqrt(1 - balpha_t) epsilon
+  v = sqrt(balpha_t) epsilon - sqrt(1 - balpha_t) x_0
+$
+
+// #tufted.margin-note(
+  figure(
+    caption: [Illustration of $x_t$ and $v$ in the $x_0$-$epsilon$ space],
+    image("img/image.png", width: 60%)
+  )
+// )
+
+Note that the coefficients of $x_0$ and $epsilon$ in $x_t$ are both positive, while $(sqrt(balpha_t)^2 + sqrt(1 - balpha_t)^2) = 1$. Therefore, the $x_t$ is a unit vector in the $x_0$-$epsilon$ space, while $v$ is the speed vector orthogonal to $x_t$.
+
+
 = Score-Based Diffusion
 
-*Score function.*
-Define $"score"(x) = nabla_x log p(x)$.
-*Tweedie’s formula.*
-If $z ~ NN(mu_z, Sigma_z)$, then $EE[mu_z|z] = z + Sigma_z nabla_z log p(z)$.
-Recall $q(x_t | x_0) = NN(x_t\; sqrt(balpha_t) x_0, (1 - balpha_t) I)$ is a Gaussian. So we can reparameterize the $x_0$ as
-$x_0 = (x_t + (1 - balpha_t) nabla_(x_t) log p(x_t)) / sqrt(balpha_t)$.
-Thus predicting a denoiser is equivalent to predicting score. Write the loss
-$EE_q(x_t|x_0) [1/(2 sigma_q^2(t)) (1-alpha_t)^2/alpha_t [norm(s_theta (x_t, t) - nabla log p(x_t))_2^2]$.
 
-*Langevin sampling (discrete).*
-Given score of $pi(x)$, iterate
-$X_(k+1) = X_k + tau nabla_x log pi(X_k) + sqrt(2 tau) xi$, $xi ~ NN(0, I)$,
+We first define *score function*, which is the gradient of log probability density,
+
+$
+  s(x) = nabla_x log p(x).
+$
+
+*Tweedie's formula:*
+
+If $z ~ NN(mu_z, Sigma_z)$, then
+
+$
+  EE[mu_z|z] = z + Sigma_z nabla_z log p(z)
+$.
+
+Recall $q(x_t|x_0) = NN(x_t\; sqrt(balpha_t) x_0, (1 - balpha_t) I)$. So we can reparameterize the $x_0$ as
+
+$
+  x_0 = (x_t + (1 - balpha_t) nabla_(x_t) log p(x_t)) / sqrt(balpha_t).
+$
+
+i.e. the score function is lienarly related to $x_t$ and $x_0$,
+thus score predictions can be equivalently used as a denoiser.
+Substituting into the denoising loss @eq:denoise-loss-x0, we have
+
+$
+  EE_q(x_t|x_0) [1/(2 sigma_q^2(t)) (1-alpha_t)^2/alpha_t norm(s_theta (x_t, t) - nabla log p(x_t))_2^2].
+$
+
+== Langevin sampling (discrete)
+
+The discrete Langevin equation shows that, given score of $pi(x)$, and a step size $tau > 0$, the Markov chain
+
+$
+  X_(k+1) = X_k + tau nabla_x log pi(X_k) + sqrt(2 tau) xi, quad xi ~ NN(0, I),
+$
+
 then $X_k ~ pi(x)$ as $k -> infinity$.
-This is noisy gradient ascent toward high-density regions.
-*Connection to diffusion.*
-Reverse-time denoising in diffusion models takes the same form, with learned score
-$nabla_x log p_t(x)$ replacing the true score.
-*Simulated Annealing.* by choosing decreasing noise levels, the sample converges to high-density modes of the data distribution.
+This process is a noisy gradient ascent toward high-density regions, which enables sampling from complex distributions with only the need of score function.
+
+// *Connection to diffusion.*
+// Reverse-time denoising in diffusion models takes the same form, with learned score
+// $nabla_x log p_t(x)$ replacing the true score.
+// *Simulated Annealing.* by choosing decreasing noise levels, the sample converges to high-density modes of the data distribution.
+
+== Learning Score Function
+
+In score-based diffusion models, the learning goal is the score function of the data distribution:
+
+$
+  s_theta (x_t, t) approx nabla_(x_t) log p_t (x_t)
+$
+
+We've shown that the denoising loss can be rewritten in terms of score function, and if we want to directly learn the score function, we can sample a data $x_0$ and learn the posterior score $nabla_(x_t) log q(x_t|x_0)$ via minimizing
 
 = Conditional Diffusion
 *Conditional score.*

@@ -199,7 +199,7 @@ $
 
 A common approach in generative modeling is Autoencoder, which maps data $x$ to a latent variable $z$ using an encoder, and then reconstructs $x$ from $z$ using a decoder.
 
-Based on that, the Variational Autoencoder (VAE) treats the latent variable $z$ as a random variable and have the encoder predict a distribution over $z$ given $x$. With this probabilitic interpretation, it becomes possible to sample new data by sampling $z$ from a prior distribution, and also other operations like interpolation in the latent space.
+Based on that, the Variational Autoencoder (VAE) treats the latent variable $z$ as a random variable and have the encoder predict a distribution over $z$ given $x$. With this probabilitic interpretation, it becomes possible to sample new data by sampli ng $z$ from a prior distribution, and also other operations like interpolation in the latent space.
 
 In VAE, *encoder* is the approximate posterior $q_phi (z|x)$, *decoder* is the generative distribution $p_theta (x|z)$, and *prior* distribution of latent variable is $p(z)$ which is usually assigned to standard Gaussian distribution $NN(0, I)$.
 
