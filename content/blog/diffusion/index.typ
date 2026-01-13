@@ -3,7 +3,7 @@
 
 // #set heading(numbering: "1.")
 // #outline()
-// #set math.equation(numbering: "a.")
+// #set math.equation(numbering: "1.")
 
 #let NN = $cal(N)$
 #let LL = $cal(L)$
@@ -97,9 +97,7 @@ where
 Consider one-step denoising term $LL_(t-1)$. The true posterior $q(x_(t-1)|x_t,x_0)$ is the learning target of our denoiser model $p_theta (x_(t-1) | x_t)$, which can be derived by Bayes' rule:
 #footnote[
   The multiplication of 2 Gaussians cdf is
-  $
-    NN(x\; mu_1, Sigma_1) NN(x\; mu_2, Sigma_2) prop NN(x\; mu, Sigma)
-  $
+  $NN(x\; mu_1, Sigma_1) NN(x\; mu_2, Sigma_2) prop NN(x\; mu, Sigma)$
   where $Sigma = (Sigma_1^(-1) + Sigma_2^(-1))^(-1)
   , mu = Sigma (Sigma_1^(-1) mu_1 + Sigma_2^(-1) mu_2)$
 ]
@@ -129,10 +127,8 @@ We can find out that the variance $sigma_q (t) I$ is independent of $x$, which m
 Therefore, by decomposing
 #footnote[
   KL divergence between 2 Gaussians is:
-  $
-    KL(NN(mu_1, Sigma_1), NN(mu_2, Sigma_2))
-    = 1/2 [log (abs(Sigma_2) / abs(Sigma_1)) - d + tr(Sigma_2^(-1) Sigma_1) + (mu_2 - mu_1)^T Sigma_2^(-1) (mu_2 - mu_1)].
-  $
+  $KL(NN(mu_1, Sigma_1), NN(mu_2, Sigma_2))
+    = 1/2 [log (abs(Sigma_2) / abs(Sigma_1)) - d + tr(Sigma_2^(-1) Sigma_1) + (mu_2 - mu_1)^T Sigma_2^(-1) (mu_2 - mu_1)].$
 ]
 KL divergence term, minimizing $LL_(t-1)$ is equivalent to minimizing
 
@@ -238,51 +234,24 @@ This process is a noisy gradient ascent toward high-density regions, which enabl
 
 #tufted.margin-note[
   In statistical mechanics, the Boltzmann distribution states that the distribution over system states is
-
-  $
-    p_i prop exp(-epsilon_i / (k T))
-  $ <eq:boltzmann>
-
+  $p_i prop exp(-epsilon_i / (k T))$
   where $epsilon_i$ is the energy of state $i$, $k$ is the Boltzmann constant, and $T$ is the temperature.
-
   The Langevin equation describes the Brownian motion of a particle in a (one-dimensional) potential field,
-
-  $
-    dif x_t = -1/gamma nabla_x U(x_t) dif t + sqrt((2 k T) / gamma) dif W_t
-  $ <eq:langevin>
-
-  where
-
-  - $x$ is the particle position
-  - $U(x)$ is the potential energy function
-  - $gamma$ is the damping coefficient
-  - $W_t$ is a standard Wiener process: $W_(t+Delta) = W_t + NN(0, Delta)$
-
+  $dif x_t = -1/gamma nabla_x U(x_t) dif t + sqrt((2 k T) / gamma) dif W_t$
+  where $x$ is the particle position,
+  $U(x)$ is the potential energy function,
+  $gamma$ is the damping coefficient,
+  and $W_t$ is a standard Wiener process: $W_(t+Delta) W_t + NN(0, Delta)$.
   According to the Boltzmann distribution,
-
-  $
-    U(x) = - k T log p(x) + "constant",
-  $
-
+  $U(x) = - k T log p(x) + "constant",$
   substituting gives
-
-  $
-    dif x_t &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t \
-    &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t
-  $
-
+  $dif x_t &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t \
+    &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t$
   In discrete time, with $x_k := x(k tau)$, the equation becomes
-
-  $
-    x_(k+1) - x_k &= - (k T)/gamma tau nabla_x log p(x_t) + sqrt((2k T)/gamma tau) xi quad &, xi ~ NN(0, I) \
-    &= - eta nabla_x log p(x_t) + sqrt(2 eta) xi &, xi ~ NN(0, I)
-  $
-
+  $x_(k+1) - x_k &= - (k T)/gamma tau nabla_x log p(x_t) + sqrt((2k T)/gamma tau) xi quad &, xi ~ NN(0, I) \
+    &= - eta nabla_x log p(x_t) + sqrt(2 eta) xi &, xi ~ NN(0, I)$
   where $eta = (k T)/gamma tau$ is the step size. Recall that $x_t$ denotes the random position of the particle, thus
-
-  $
-    x_k ~ p(x)
-  $
+  $x_k ~ p(x)$
 ]
 
 #tufted.margin-note[
@@ -396,3 +365,7 @@ $
 $
 
 where $S >= 1$ is a scaling factor to guide the strength of the condition.
+
+#tufted.full-width[
+  123123123123
+]
