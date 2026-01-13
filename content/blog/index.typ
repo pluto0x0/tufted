@@ -9,6 +9,7 @@
 - #link("2025-04-16-monkeys-apes/")[Monkeys vs Apes]
 - #link("2025-12-25-elbo-vae/")[ELBO and VAE]
 - #link("diffusion/")[Diffusion Models]
+- #link("flow/")[Flow Matching]
 
 == 2024
 
