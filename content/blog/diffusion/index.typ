@@ -204,8 +204,8 @@ $
 If $z ~ NN(mu_z, Sigma_z)$, then
 
 $
-  EE[mu_z|z] = z + Sigma_z nabla_z log p(z)
-$.
+  EE[mu_z|z] = z + Sigma_z nabla_z log p(z).
+$
 
 Recall $q(x_t|x_0) = NN(x_t\; sqrt(balpha_t) x_0, (1 - balpha_t) I)$. So we can reparameterize the $x_0$ with Tweedie's formula as
 
@@ -230,7 +230,6 @@ $
 $
 
 then $X_k ~ pi(x)$ as $k -> infinity$.
-This process is a noisy gradient ascent toward high-density regions, which enables sampling from complex distributions with only the need of score function.
 
 #tufted.margin-note[
   In statistical mechanics, the Boltzmann distribution states that the distribution over system states is
@@ -238,7 +237,8 @@ This process is a noisy gradient ascent toward high-density regions, which enabl
   where $epsilon_i$ is the energy of state $i$, $k$ is the Boltzmann constant, and $T$ is the temperature.
   The Langevin equation describes the Brownian motion of a particle in a (one-dimensional) potential field,
   $dif x_t = -1/gamma nabla_x U(x_t) dif t + sqrt((2 k T) / gamma) dif W_t$
-  where $x$ is the particle position,
+  where
+  $x$ is the particle position,
   $U(x)$ is the potential energy function,
   $gamma$ is the damping coefficient,
   and $W_t$ is a standard Wiener process: $W_(t+Delta) W_t + NN(0, Delta)$.
@@ -246,13 +246,16 @@ This process is a noisy gradient ascent toward high-density regions, which enabl
   $U(x) = - k T log p(x) + "constant",$
   substituting gives
   $dif x_t &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t \
-    &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t$
-  In discrete time, with $x_k := x(k tau)$, the equation becomes
-  $x_(k+1) - x_k &= - (k T)/gamma tau nabla_x log p(x_t) + sqrt((2k T)/gamma tau) xi quad &, xi ~ NN(0, I) \
+    &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t.$
+  In the discrete time, with time defined as $x_k := x(k tau)$, the equation becomes
+  $ &x_(k+1) - x_k
+    // &= - (k T)/gamma tau nabla_x log p(x_t) + sqrt((2k T)/gamma tau) xi quad &, xi ~ NN(0, I) \
     &= - eta nabla_x log p(x_t) + sqrt(2 eta) xi &, xi ~ NN(0, I)$
-  where $eta = (k T)/gamma tau$ is the step size. Recall that $x_t$ denotes the random position of the particle, thus
-  $x_k ~ p(x)$
+  where $eta = (k T)/gamma tau$ is the step size. Recall that $x_t$ denotes the random position of the particle, thus we have
+  $x_k ~ p(x)$.
 ]
+
+This process is a noisy gradient ascent toward high-density regions, which enables sampling from complex distributions with only the need of score function.
 
 #tufted.margin-note[
   If we keep the potential energy in the Boltzmann distribution fixed and let
@@ -365,7 +368,3 @@ $
 $
 
 where $S >= 1$ is a scaling factor to guide the strength of the condition.
-
-#tufted.full-width[
-  123123123123
-]
