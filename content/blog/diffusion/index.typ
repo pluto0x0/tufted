@@ -176,7 +176,7 @@ $
 
 Compared to predicting $x_0$, $epsilon_0$ follows a standard Gaussian distribution, thus has better numerical stability.
 
-In fact, we can predict any linear combination of $x_0$ and $epsilon_0$, e.g. in the v-parameterization, we predict
+In fact, we can predict any linear combination of $x_0$ and $epsilon_0$, e.g. in the v-parameterization, we instead predict
 
 $
   // x_t = sqrt(balpha_t) x_0 + sqrt(1 - balpha_t) epsilon
@@ -184,7 +184,7 @@ $
 $
 
 #tufted.margin-note(
-  image("img/image.png", width: 100%)
+  image("img/image.png", width: 75%)
 )
 
 #tufted.margin-note[
@@ -236,61 +236,68 @@ $
 then $X_k ~ pi(x)$ as $k -> infinity$.
 This process is a noisy gradient ascent toward high-density regions, which enables sampling from complex distributions with only the need of score function.
 
-// #tufted.margin-note[
-  
-// 统计力学的玻尔兹曼分布（Boltzmann distribution）指出一个系统的状态分布为
+#tufted.margin-note[
+  In statistical mechanics, the Boltzmann distribution states that the distribution over system states is
 
-// $
-//   p_i prop exp(-epsilon_i / (k T))
-// $ <eq:boltzmann>
+  $
+    p_i prop exp(-epsilon_i / (k T))
+  $ <eq:boltzmann>
 
-// 其中 $epsilon_i$ 是状态 $i$ 的能量，$k$ 是玻尔兹曼常数，$T$ 是温度.
+  where $epsilon_i$ is the energy of state $i$, $k$ is the Boltzmann constant, and $T$ is the temperature.
 
-// === Langevin equation
+  The Langevin equation describes the Brownian motion of a particle in a (one-dimensional) potential field,
 
-// 而 Langevin equation 描述的是粒子在（一维）势能场中的布朗运动，
+  $
+    dif x_t = -1/gamma nabla_x U(x_t) dif t + sqrt((2 k T) / gamma) dif W_t
+  $ <eq:langevin>
 
-// $
-//   dif x_t = -1/gamma nabla_x U(x_t) dif t + sqrt((2 k T) / gamma) dif W_t
-// $ <eq:langevin>
+  where
 
-// 其中
+  - $x$ is the particle position
+  - $U(x)$ is the potential energy function
+  - $gamma$ is the damping coefficient
+  - $W_t$ is a standard Wiener process: $W_(t+Delta) = W_t + NN(0, Delta)$
 
-// - $x$ 是粒子位置
-// - $U(x)$ 是势能函数
-// - $gamma$ 是阻尼系数
-// - $W_t$ 是标准 Wiener 过程：$W_(t+Delta) = W_t + NN(0, Delta)$
+  According to the Boltzmann distribution,
 
-// 根据 Boltzmann distribution
+  $
+    U(x) = - k T log p(x) + "constant",
+  $
 
-// $
-//   U(x) = - k T log p(x) + "constant",
-// $
+  substituting gives
 
-// 代入得
+  $
+    dif x_t &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t \
+    &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t
+  $
 
-// $
-//   dif x_t &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t \
-//   &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t
-// $
+  In discrete time, with $x_k := x(k tau)$, the equation becomes
 
-// 方程在离散时间 $x_k := x(k tau)$ 下的形式为
+  $
+    x_(k+1) - x_k &= - (k T)/gamma tau nabla_x log p(x_t) + sqrt((2k T)/gamma tau) xi quad &, xi ~ NN(0, I) \
+    &= - eta nabla_x log p(x_t) + sqrt(2 eta) xi &, xi ~ NN(0, I)
+  $
 
-// $
-//   x_(k+1) - x_k &= - (k T)/gamma tau nabla_x log p(x_t) + sqrt((2k T)/gamma tau) xi quad &, xi ~ NN(0, I) \
-//   &= - eta nabla_x log p(x_t) + sqrt(2 eta) xi &, xi ~ NN(0, I)
-// $
+  where $eta = (k T)/gamma tau$ is the step size. Recall that $x_t$ denotes the random position of the particle, thus
 
-// 其中 $eta = (k T)/gamma tau$ 是步长. 回忆 $x_t$ 描述的是粒子的随机位置，因此
+  $
+    x_k ~ p(x)
+  $
+]
 
-// $
-//   x_k ~ p(x)
-// $
-
-// 即已知对数梯度 $nabla log p(x)$ 时，Langevin dynamics 迭代的过程可以对分布 $p(x)$ 采样，而不需要显式地知道 $p(x)$ 的形式。
-
-// 观察迭代形式，这实际上是一个带随机扰动的对数梯度上升过程，梯度项使得粒子趋向于高概率区域，而随机扰动则保证了采样的多样性.
-// ]
+#tufted.margin-note[
+  If we keep the potential energy in the Boltzmann distribution fixed and let
+  $T$ gradually converge to $0$, the distribution converges to a point mass
+  $p(x) = delta(x - x^*)$, where $x^* = arg min_{x} U(x)$ is the point of
+  minimum potential energy. In this case, the stochastic perturbation term in
+  the Langevin equation converges to $0$, and the Langevin dynamics degenerates
+  into gradient descent on the potential. The rate at which the temperature $T$
+  is decreased controls the randomness of the sampling process: a fast cooling
+  schedule leads to insufficient exploration and getting stuck in local minima
+  of the potential, whereas a slower schedule gives a higher probability of
+  reaching the global minimum. This method of simulating the cooling process is
+  known as *Simulated Annealing*.
+]
 
 // *Connection to diffusion.*
 // Reverse-time denoising in diffusion models takes the same form, with learned score
