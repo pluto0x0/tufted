@@ -105,7 +105,9 @@ Consider one-step denoising term $LL_(t-1)$. The true posterior $q(x_(t-1)|x_t,x
 ]
 #footnote[
   By the symmetry of Gaussian cdf between $x$ and $mu$, we have
-  $NN(x_t\; sqrt(alpha_t) x_(t-1), beta_t I) prop NN(x_(t-1)\; (1 / sqrt(alpha_t)) x_t, (beta_t / alpha_t) I)$.
+  $
+    NN(x_t\; sqrt(alpha_t) x_(t-1), beta_t I) prop NN(x_(t-1)\; (1 / sqrt(alpha_t)) x_t, (beta_t / alpha_t) I).
+  $
   // Recall $NN(x, mu, Sigma) = 1/(sqrt((2 pi)^d abs(Sigma))) exp(-1/2 (x - mu)^T Sigma^(-1) (x - mu))$.
 ]
 
@@ -125,9 +127,12 @@ $
 We can find out that the variance $sigma_q (t) I$ is independent of $x$, which means we only need to learn mean $mu_theta$. Furthermore, if the model predicts the original data $x_0$ as $hat(x_theta)(x_t, t)$, then we can obtain the predicted mean as $mu_theta (x_t, t)=mu_q (x_t, hat(x_theta)(x_t, t), t)$.
 
 Therefore, by decomposing
-#footnote[KL divergence between 2 Gaussians is:
-  $KL(NN(mu_1, Sigma_1), NN(mu_2, Sigma_2))
-  = 1/2 [log (abs(Sigma_2) / abs(Sigma_1)) - d + tr(Sigma_2^(-1) Sigma_1) + (mu_2 - mu_1)^T Sigma_2^(-1) (mu_2 - mu_1)]$.
+#footnote[
+  KL divergence between 2 Gaussians is:
+  $
+    KL(NN(mu_1, Sigma_1), NN(mu_2, Sigma_2))
+    = 1/2 [log (abs(Sigma_2) / abs(Sigma_1)) - d + tr(Sigma_2^(-1) Sigma_1) + (mu_2 - mu_1)^T Sigma_2^(-1) (mu_2 - mu_1)].
+  $
 ]
 KL divergence term, minimizing $LL_(t-1)$ is equivalent to minimizing
 
