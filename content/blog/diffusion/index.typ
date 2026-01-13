@@ -178,12 +178,10 @@ $
   v = sqrt(balpha_t) epsilon - sqrt(1 - balpha_t) x_0
 $
 
-#tufted.margin-note(
-  figure(
-    caption: [Illustration of $x_t$ and $v$ in the $x_0$-$epsilon$ space],
-    image("img/image.png", width: 60%)
-  )
-)
+#tufted.margin-note({
+  image("img/image.png", width: 60%)
+  [Illustration of $x_t$ and $v$ in the $x_0$-$epsilon$ space]
+})
 
 Note that the coefficients of $x_0$ and $epsilon$ in $x_t$ are both positive, while $(sqrt(balpha_t)^2 + sqrt(1 - balpha_t)^2) = 1$. Therefore, the $x_t$ is a unit vector in the $x_0$-$epsilon$ space, while $v$ is the speed vector orthogonal to $x_t$.
 
