@@ -228,6 +228,62 @@ $
 then $X_k ~ pi(x)$ as $k -> infinity$.
 This process is a noisy gradient ascent toward high-density regions, which enables sampling from complex distributions with only the need of score function.
 
+// #tufted.margin-note[
+  
+// 统计力学的玻尔兹曼分布（Boltzmann distribution）指出一个系统的状态分布为
+
+// $
+//   p_i prop exp(-epsilon_i / (k T))
+// $ <eq:boltzmann>
+
+// 其中 $epsilon_i$ 是状态 $i$ 的能量，$k$ 是玻尔兹曼常数，$T$ 是温度.
+
+// === Langevin equation
+
+// 而 Langevin equation 描述的是粒子在（一维）势能场中的布朗运动，
+
+// $
+//   dif x_t = -1/gamma nabla_x U(x_t) dif t + sqrt((2 k T) / gamma) dif W_t
+// $ <eq:langevin>
+
+// 其中
+
+// - $x$ 是粒子位置
+// - $U(x)$ 是势能函数
+// - $gamma$ 是阻尼系数
+// - $W_t$ 是标准 Wiener 过程：$W_(t+Delta) = W_t + NN(0, Delta)$
+
+// 根据 Boltzmann distribution
+
+// $
+//   U(x) = - k T log p(x) + "constant",
+// $
+
+// 代入得
+
+// $
+//   dif x_t &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t \
+//   &= (k T)/gamma nabla_x log p(x_t) dif t + sqrt((2 k T) / gamma) dif W_t
+// $
+
+// 方程在离散时间 $x_k := x(k tau)$ 下的形式为
+
+// $
+//   x_(k+1) - x_k &= - (k T)/gamma tau nabla_x log p(x_t) + sqrt((2k T)/gamma tau) xi quad &, xi ~ NN(0, I) \
+//   &= - eta nabla_x log p(x_t) + sqrt(2 eta) xi &, xi ~ NN(0, I)
+// $
+
+// 其中 $eta = (k T)/gamma tau$ 是步长. 回忆 $x_t$ 描述的是粒子的随机位置，因此
+
+// $
+//   x_k ~ p(x)
+// $
+
+// 即已知对数梯度 $nabla log p(x)$ 时，Langevin dynamics 迭代的过程可以对分布 $p(x)$ 采样，而不需要显式地知道 $p(x)$ 的形式。
+
+// 观察迭代形式，这实际上是一个带随机扰动的对数梯度上升过程，梯度项使得粒子趋向于高概率区域，而随机扰动则保证了采样的多样性.
+// ]
+
 // *Connection to diffusion.*
 // Reverse-time denoising in diffusion models takes the same form, with learned score
 // $nabla_x log p_t(x)$ replacing the true score.
@@ -264,19 +320,64 @@ where $lambda(t)$ is a weighting function which balances the loss at different n
 
 = Conditional Diffusion
 
-*Conditional score.*
-Target $nabla_x log p(x|c) = nabla_x log p(x) + nabla_x log p(c|x)$.
+In pratice, we often want to generate data conditioned on some information $c$, e.g. class labels or text descriptions. We can achieve this by learning the *conditional score function:*
 
-*Classifier Guidance.* Use a classifier $h$ on noised $x_t$. The prediction probability is $"softmax"(p_i (x_t)) := (exp h_i (x_t)) / (sum_j exp h_j (x_t))$. Then $nabla_x log p(c|x)$ is $nabla_x h_c (x) - nabla_x log (sum_j exp h_j (x))$. Use backprop to compute gradients, or just use $nabla_x h_c (x)$. Further, define $nabla_x log p(x|c) = nabla_x log p(x) + s nabla_x log p(c|x)$, scale by $s > 1$ to strengthen conditioning.
+$
+  nabla_x log p(x|c) = nabla_x log p(x) + nabla_x log p(c|x).
+$
 
-*Classifier Free Guidance (CFG).*
-Define a Conditional Denoiser $D_theta (x_t, sigma, c) -> hat(x_0)$ that takes condition $c$ as input.
+Since we've learned $nabla_x log p(x)$ in the unconditional diffusion model, we only need to find a way to compute $nabla_x log p(c|x)$.
 
-*Two scores.*
-Conditional: $nabla_x log p_theta(x_t, c) = (D_theta (x_t, sigma, c) - x_t) / sigma^2$.
-Unconditional: $nabla_x log p_theta(x_t) = (D_theta (x_t, sigma, emptyset) - x_t) / sigma^2$.
-where $emptyset$ denotes no condition.
+== Classifier Guidance
 
-*CFG combination.*
-$nabla_x log p(x|c) = S nabla_x log p_theta (x_t, c) + (1 - S) nabla_x log p_theta (x_t)$
-$= 1/sigma^2 (S D_theta (x_t, sigma, c) + (1 - S) D_theta (x_t, sigma, emptyset) - x_t)$.
+A simple way is to train a classifier $p_i (x) = p(c=i|x)$ on the noised data $x_t$ at different noise levels $t$. Then during sampling, we can compute $nabla_x log p(c|x)$ via backpropagation through the classifier.
+
+In detail, if we assume the classifier outputs logits $h_i (x)$ for each class $i$, then the class probability is given by softmax:
+
+$
+  p_i (x) = "softmax"(h_i (x)) := exp(h_i (x)) / (sum_j exp(h_j (x))).
+$
+
+Then we can compute the gradient of log probability as
+
+$
+  nabla_x log p(c|x) = nabla_x h_c (x) - nabla_x log (sum_j exp(h_j (x))).
+$
+
+Or we can simply use $nabla_x h_c (x)$ as an approximation.
+
+Furthermore, we can employ $nabla_x log p(x|c) = nabla_x log p(x) + s nabla_x log p(c|x)$, where $s > 1$ is a scaling factor to control the strength of the condition.
+
+== Classifier Free Guidance (CFG)
+
+The Classifier Guidance requires training a separate classifier model, which is inconvenient. Instead, we can train a single conditional diffusion model that takes condition $c$ as input, and an unconditional model by randomly dropping the condition during training. This is called Classifier Free Guidance (CFG).
+
+Define a conditional denoiser
+
+$
+  D_theta (x_t, sigma, c) -> hat(x_0)
+$
+that takes condition $c$ as input. The denoiser is able to predict both conditional and unconditional outputs by setting $c$ to $emptyset$, a special token denoting no condition.
+
+By Tweedie's formula, we can derive the score function from the denoiser as
+conditional score
+
+$
+  nabla_x log p_theta (x_t, c) = (D_theta (x_t, sigma, c) - x_t) / sigma^2
+$
+
+and unconditional score
+
+$
+  nabla_x log p_theta (x_t) = (D_theta (x_t, sigma, emptyset) - x_t) / sigma^2.
+$
+
+Finally, to obtain the conditional score function, we combine the two scores as
+
+$
+  nabla_x log p(x|c)
+  =& nabla_x log p_theta (x_t) + S(nabla_x log p_theta (x_t, c) - nabla_x log p_theta (x_t)) \
+   =& 1/sigma^2 (S D_theta (x_t, sigma, c) + (1 - S) D_theta (x_t, sigma, emptyset) - x_t).
+$
+
+where $S >= 1$ is a scaling factor to guide the strength of the condition.
