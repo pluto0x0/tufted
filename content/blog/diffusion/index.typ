@@ -179,7 +179,7 @@ $
 $
 
 #tufted.margin-note(
-  image("img/image.png", width: 60%)
+  image("img/image.png", width: 100%)
 )
 
 #tufted.margin-note[
