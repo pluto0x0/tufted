@@ -10,7 +10,7 @@
 #let dp(x, y) = $#x^top#y$
 #let lint = $limits(integral)$
 
-#set math.equation(numbering: "1.")
+// #set math.equation(numbering: "1.")
 
 = ODE and SDE
 
@@ -166,15 +166,15 @@ $
 where $nabla$ is the divergence operator defined as
 $nabla dot f(xx) = (partial f_1)/(partial x_1) + (partial f_2)/(partial x_2) + dots + (partial f_n)/(partial x_n)$, which described the net "intensity" of the field (probability mass) flowing out of a point.
 
-#tufed.margin-note[
+#tufted.margin-note[
   #image("img/div.png")
 ]
 
-#tufed.margin-note[
-  (#link("https://www.khanacademy.org/math/multivariable-calculus/multivariable-derivatives/divergence-and-curl-articles/a/divergence")[Image Credit])
+#tufted.margin-note[
+  (#link("https://www.khanacademy.org/math/multivariable-calculus/multivariable-derivatives/divergence-and-curl-articles/a/divergence")[Image Credit]) Illustration of divergence of a vector field.
 ]
 
-#tufed.margin-note[
+#tufted.margin-note[
   Take $x$ direction as an example, if $(partial u) / (partial x) > 0$, it means the strength of probability mass flowing out of the point on the right side is larger than the strength flowing in from the left side, thus the net effect is probability mass is flowing out of the point, i.e., divergence is positive.
 ]
 
