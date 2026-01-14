@@ -164,7 +164,11 @@ $
 $
 
 where $nabla$ is the divergence operator defined as
-$nabla dot f(xx) = (partial f_1)/(partial x_1) + (partial f_2)/(partial x_2) + dots + (partial f_n)/(partial x_n)$, which described the net "intensity" of the field (probability mass) flowing out of a point.
+$nabla dot f(xx) = (partial f_1)/(partial x_1) + (partial f_2)/(partial x_2) + dots + (partial f_n)/(partial x_n)$,
+#footnote[
+  The divergence operator is written in form of a dot product because it can be viewed as the dot product between the gradient operator $nabla = ((partial)/(partial x_1), (partial)/(partial x_2), dots, (partial)/(partial x_n))$ and the vector field $f(xx) = (f_1 (xx), f_2 (xx), dots, f_n (xx))$.
+]
+which described the net "intensity" of the field (probability mass) flowing out of a point.
 
 #tufted.margin-note[
   #image("img/div.png")
@@ -257,12 +261,24 @@ We can easily write down the training algorithm based on the conditional Flow Ma
 
 = Fokker-Planck Equation
 
+Similar to continuity equation for ODEs,
+the Fokker-Planck Equation describes the time evolution of the probability density function of a random variable $xx$ governed by a SDE.
+
 $
   (partial p) / (partial t) = -nabla dot (f p) + 1/2 nabla^2 (g g^top p)
 $
 
-where $f$ is drift, $g$ is diffusion term, $nabla dot$ is divergence and $nabla^2$ is Laplacian operator, the divergence of the gradient. The eqation describes the time evolution of the probability density function of the random variable xx governed by the SDE. Same concept with continuity equation.
-Fokker-Planck Equation tells us a ODE can also describe the probability density evolution of a SDE.
+where $f$ and $g$ are drift and diffusion terms respectively, $nabla dot$ is divergence and $nabla^2$ is Laplacian operator, the divergence of the gradient.
+Fokker-Planck Equation also shows that a ODE can also describe the probability density evolution of a SDE.
+E.g. for a original ODE
 
-For a original ODE $(dif xx_t)/(dif t) = u_t (xx_t)$ with $xx_0 ~ p_0$.
-The equivalent SDE is $dif xx_t = [u_t (xx_t) - sigma_t^2/2 nabla_xx log p_t (xx_t)] dif t + sigma(t) dif vm(w)$.
+$
+  (dif xx_t)/(dif t) = u_t (xx_t)
+$
+with $xx_0 ~ p_0$, then the equivalent SDE is
+
+$
+  dif xx_t = [u_t (xx_t) - sigma_t^2/2 nabla_xx log p_t (xx_t)] dif t + sigma(t) dif vm(w),
+$
+
+where $sigma(t)$ is an arbitrary scalar function.
