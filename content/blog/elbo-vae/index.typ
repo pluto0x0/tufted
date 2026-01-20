@@ -1,5 +1,5 @@
 #import "../index.typ": template, tufted
-#show: template
+#show: template.with(title: "ELBO and VAE")
 // #let note = tufted.margin-note
 // #let note(t) = block(
 //   fill: luma(230),

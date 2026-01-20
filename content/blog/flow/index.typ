@@ -1,5 +1,5 @@
 #import "../index.typ": template, tufted
-#show: template.with(title: "Diffusion")
+#show: template.with(title: "ODE, SDE, and Flow Matching")
 
 #let NN = $cal(N)$
 #let vm(x) = $bold(upright(#x))$

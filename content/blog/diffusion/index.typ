@@ -1,5 +1,5 @@
 #import "../index.typ": template, tufted
-#show: template.with(title: "Diffusion")
+#show: template.with(title: "Diffusion Models and Variants")
 
 // #set heading(numbering: "1.")
 // #outline()
